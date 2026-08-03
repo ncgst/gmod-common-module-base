@@ -16,7 +16,6 @@ on:
       PROJECT_NAME:
         type: string
         required: true
-        default: "template"
         description: "The Project to compile. This should be the same value as you set in the premake5.lua"
       PROJECT_PATH:
         type: string
@@ -33,6 +32,11 @@ on:
         required: false
         default: "true"
         description: "If enabled, it will use the gm[realm]_[Project]_[platform].[extension] format. Else, it will just use [Project].[extension] name."
+      ADDITIONAL_POSTARTIFACTNAME:
+        type: string
+        required: false
+        default: ""
+        description: "A suffix to append to uploaded artifact names"
       BUILD_64x:
         type: string
         required: false
@@ -228,19 +232,19 @@ jobs:
     env:
       PTERODACTYL_SERVER: ${{ secrets.PTERODACTYL_SERVER }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout
         with:
           submodules: recursive
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout garrysmod_common
         with:
           repository: ${{inputs.GARRYSMOD_COMMON}}
           ref: ${{inputs.GARRYSMOD_COMMON_BRANCH}}
           path: '${{inputs.PROJECT_PATH}}garrysmod_common'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout premake-export-compile-commands
         with:
           repository: "danielga/premake-export-compile-commands"
@@ -248,7 +252,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/premake/premake-export-compile-commands'
           submodules: 'recursive'
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout sourcesdk-minimal
         with:
           repository: ${{inputs.SOURCESDK_MINIMAL}}
@@ -256,7 +260,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/sourcesdk-minimal'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout scanning
         with:
           repository: ${{inputs.SCANNING}}
@@ -264,7 +268,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/scanning'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout detouring
         with:
           repository: ${{inputs.DETOURING}}
@@ -274,7 +278,7 @@ jobs:
 
       - name: Restore ccache
         if: inputs.BUILD_CACHE == 'true'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: /github/home/.cache/ccache
           key: ${{ runner.os }}-${{ inputs.PROJECT_NAME }}-${{inputs.PROJECT_CONFIGURATION}}-32x-ccache-${{ hashFiles(format('{0}**/*.cpp', inputs.PROJECT_PATH), format('{0}**/*.h', inputs.PROJECT_PATH), format('{0}**/*.hxx', inputs.PROJECT_PATH), format('{0}**/*.cxx', inputs.PROJECT_PATH), format('{0}**/*.c', inputs.PROJECT_PATH), format('{0}**/premake5.lua', inputs.PROJECT_PATH)) }}
@@ -301,7 +305,7 @@ jobs:
 
       - name: Save ccache
         if: inputs.NO_SAVE_CACHE != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: /github/home/.cache/ccache
           key: ${{ runner.os }}-${{ inputs.PROJECT_NAME }}-${{inputs.PROJECT_CONFIGURATION}}-32x-ccache-${{ hashFiles(format('{0}**/*.cpp', inputs.PROJECT_PATH), format('{0}**/*.h', inputs.PROJECT_PATH), format('{0}**/*.hxx', inputs.PROJECT_PATH), format('{0}**/*.cxx', inputs.PROJECT_PATH), format('{0}**/*.c', inputs.PROJECT_PATH), format('{0}**/premake5.lua', inputs.PROJECT_PATH)) }}
@@ -312,13 +316,13 @@ jobs:
 
       - name: Upload ccache log file for debugging
         if: inputs.UPLOAD == 'artifact' && inputs.BUILD_CACHE == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{env.PROJECT_NAME_LINUX32}}-ccache-debug-log
           path: "/tmp/ccache.log"
           retention-days: 1
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         name: Upload ${{env.PROJECT_NAME_LINUX32}}.${{inputs.LINUX_FILEEXTENTION}} (Artifact)
         if: inputs.UPLOAD == 'artifact'
         with:
@@ -358,11 +362,11 @@ jobs:
             -d '{ "signal": "start" }'
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         name: Upload ${{env.PROJECT_NAME_LINUX32}}.pdb (Artifact)
         if: inputs.UPLOAD == 'artifact' && inputs.UPLOAD_PDB == 'true'
         with:
-          name: ${{env.PROJECT_NAME_LINUX32}}.pdb
+          name: ${{env.PROJECT_NAME_LINUX32}}.pdb${{ inputs.ADDITIONAL_POSTARTIFACTNAME }}
           path: ${{inputs.PROJECT_PATH}}projects/linux/gmake/x86/ReleaseWithSymbols/${{env.PROJECT_NAME_LINUX32}}.pdb
           retention-days: ${{inputs.PDB_ARTIFACT_EXPIRE}}
 
@@ -373,19 +377,19 @@ jobs:
     env:
       PTERODACTYL_SERVER: ${{ secrets.PTERODACTYL_SERVER }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout
         with:
           submodules: recursive
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout garrysmod_common
         with:
           repository: ${{inputs.GARRYSMOD_COMMON}}
           ref: ${{inputs.GARRYSMOD_COMMON_64XBRANCH}}
           path: '${{inputs.PROJECT_PATH}}garrysmod_common'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout premake-export-compile-commands
         with:
           repository: "danielga/premake-export-compile-commands"
@@ -393,7 +397,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/premake/premake-export-compile-commands'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout sourcesdk-minimal
         with:
           repository: ${{inputs.SOURCESDK_MINIMAL}}
@@ -401,7 +405,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/sourcesdk-minimal'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout scanning
         with:
           repository: ${{inputs.SCANNING}}
@@ -409,7 +413,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/scanning'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout detouring
         with:
           repository: ${{inputs.DETOURING}}
@@ -419,7 +423,7 @@ jobs:
 
       - name: Restore ccache
         if: inputs.BUILD_CACHE == 'true'
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: /github/home/.cache/ccache
           key: ${{ runner.os }}-${{ inputs.PROJECT_NAME }}-${{inputs.PROJECT_CONFIGURATION}}-64x-ccache-${{ hashFiles(format('{0}**/*.cpp', inputs.PROJECT_PATH), format('{0}**/*.h', inputs.PROJECT_PATH), format('{0}**/*.hxx', inputs.PROJECT_PATH), format('{0}**/*.cxx', inputs.PROJECT_PATH), format('{0}**/*.c', inputs.PROJECT_PATH), format('{0}**/premake5.lua', inputs.PROJECT_PATH)) }}
@@ -446,7 +450,7 @@ jobs:
 
       - name: Save ccache
         if: inputs.NO_SAVE_CACHE != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: /github/home/.cache/ccache
           key: ${{ runner.os }}-${{ inputs.PROJECT_NAME }}-${{inputs.PROJECT_CONFIGURATION}}-64x-ccache-${{ hashFiles(format('{0}**/*.cpp', inputs.PROJECT_PATH), format('{0}**/*.h', inputs.PROJECT_PATH), format('{0}**/*.hxx', inputs.PROJECT_PATH), format('{0}**/*.cxx', inputs.PROJECT_PATH), format('{0}**/*.c', inputs.PROJECT_PATH), format('{0}**/premake5.lua', inputs.PROJECT_PATH)) }}
@@ -455,7 +459,7 @@ jobs:
         if: inputs.BUILD_CACHE == 'true'
         run: ccache -s
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         name: Upload ${{env.PROJECT_NAME_LINUX64}}.${{inputs.LINUX_FILEEXTENTION}} (Artifact)
         if: inputs.UPLOAD == 'artifact'
         with:
@@ -495,11 +499,11 @@ jobs:
             -d '{ "signal": "start" }'
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         name: Upload ${{env.PROJECT_NAME_LINUX64}}.pdb (Artifact)
         if: inputs.UPLOAD == 'artifact' && inputs.UPLOAD_PDB == 'true'
         with:
-          name: "${{env.PROJECT_NAME_LINUX64}}.pdb (64x)"
+          name: "${{env.PROJECT_NAME_LINUX64}}.pdb (64x)${{ inputs.ADDITIONAL_POSTARTIFACTNAME }}"
           path: ${{inputs.PROJECT_PATH}}projects/linux/gmake/x86_64/${{inputs.PROJECT_CONFIGURATION}}/${{env.PROJECT_NAME_LINUX64}}.pdb
           retention-days: ${{inputs.PDB_ARTIFACT_EXPIRE}}
 
@@ -507,19 +511,19 @@ jobs:
     runs-on: windows-2022
     if: (inputs.BUILD_32x == 'true') && (inputs.BUILD_WINDOWS == 'true')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout
         with:
           submodules: recursive
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout garrysmod_common
         with:
           repository: ${{inputs.GARRYSMOD_COMMON}}
           ref: ${{inputs.GARRYSMOD_COMMON_BRANCH}}
           path: '${{inputs.PROJECT_PATH}}garrysmod_common'
         
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout premake-export-compile-commands
         with:
           repository: "danielga/premake-export-compile-commands"
@@ -527,7 +531,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/premake/premake-export-compile-commands'
           submodules: 'recursive'
   
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout sourcesdk-minimal
         with:
           repository: ${{inputs.SOURCESDK_MINIMAL}}
@@ -535,7 +539,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/sourcesdk-minimal'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout scanning
         with:
           repository: ${{inputs.SCANNING}}
@@ -543,7 +547,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/scanning'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout detouring
         with:
           repository: ${{inputs.DETOURING}}
@@ -554,11 +558,11 @@ jobs:
       - name: Install Premake
         run: |
           ${{env.PROJECT_PATH}}
-          curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-windows.zip -o premake.zip
+          curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip -o premake.zip
           tar -xf premake.zip
 
       - name: Cache MSBuild output
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ inputs.PROJECT_PATH }}projects/
           key: ${{ runner.os }}-${{ inputs.PROJECT_NAME }}-32x-ccache-${{ hashFiles(format('{0}**/*.cpp', inputs.PROJECT_PATH), format('{0}**/*.h', inputs.PROJECT_PATH), format('{0}**/*.hxx', inputs.PROJECT_PATH), format('{0}**/*.cxx', inputs.PROJECT_PATH), format('{0}**/*.c', inputs.PROJECT_PATH), format('{0}**/premake5.lua', inputs.PROJECT_PATH)) }}
@@ -575,7 +579,7 @@ jobs:
           ./premake5.exe --gmcommon=garrysmod_common ${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && '--dedicated' || '' }} vs2022
 
       - name: Setup MSBuild environment
-        uses: microsoft/setup-msbuild@v1
+        uses: microsoft/setup-msbuild@v3
 
       - name: Build
         run: |
@@ -583,19 +587,19 @@ jobs:
           cd projects/windows/vs2022
           msbuild /p:Configuration=${{inputs.PROJECT_CONFIGURATION}} /p:Platform=Win32 ${{inputs.PROJECT_NAME}}.sln
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: inputs.UPLOAD == 'artifact'
         name: Upload ${{env.PROJECT_NAME_WIN32}}.${{inputs.WINDOWS_FILEEXTENTION}} (Artifact)
         with:
-          name: "${{env.PROJECT_NAME_WIN32}}.${{inputs.WINDOWS_FILEEXTENTION}}${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && ' (Dedicated)' || '' }}"
+          name: "${{env.PROJECT_NAME_WIN32}}.${{inputs.WINDOWS_FILEEXTENTION}}${{ inputs.ADDITIONAL_POSTARTIFACTNAME }}${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && ' (Dedicated)' || '' }}"
           path: ${{inputs.PROJECT_PATH}}projects/windows/vs2022/x86/${{inputs.PROJECT_CONFIGURATION}}/${{env.PROJECT_NAME_WIN32}}.${{inputs.WINDOWS_FILEEXTENTION}}
           retention-days: ${{inputs.ARTIFACT_EXPIRE}}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: inputs.UPLOAD_PDB == 'true'
         name: Upload ${{env.PROJECT_NAME_WIN32}}.pdb (Artifact)
         with:
-          name: "${{env.PROJECT_NAME_WIN32}}.pdb${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && ' (Dedicated)' || '' }}"
+          name: "${{env.PROJECT_NAME_WIN32}}.pdb${{ inputs.ADDITIONAL_POSTARTIFACTNAME }}${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && ' (Dedicated)' || '' }}"
           path: ${{inputs.PROJECT_PATH}}projects/windows/vs2022/x86/${{inputs.PROJECT_CONFIGURATION}}/${{env.PROJECT_NAME_WIN32}}.pdb
           retention-days: ${{inputs.PDB_ARTIFACT_EXPIRE}}
 
@@ -603,19 +607,19 @@ jobs:
     runs-on: windows-2022
     if: (inputs.BUILD_64x == 'true') && (inputs.BUILD_WINDOWS == 'true')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout
         with:
           submodules: recursive
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout garrysmod_common
         with:
           repository: ${{inputs.GARRYSMOD_COMMON}}
           ref: ${{inputs.GARRYSMOD_COMMON_64XBRANCH}}
           path: '${{inputs.PROJECT_PATH}}garrysmod_common'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout premake-export-compile-commands
         with:
           repository: "danielga/premake-export-compile-commands"
@@ -623,7 +627,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/premake/premake-export-compile-commands'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout sourcesdk-minimal
         with:
           repository: ${{inputs.SOURCESDK_MINIMAL}}
@@ -631,7 +635,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/sourcesdk-minimal'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout scanning
         with:
           repository: ${{inputs.SCANNING}}
@@ -639,7 +643,7 @@ jobs:
           path: '${{inputs.PROJECT_PATH}}garrysmod_common/scanning'
           submodules: 'recursive'
           
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         name: Checkout detouring
         with:
           repository: ${{inputs.DETOURING}}
@@ -650,11 +654,11 @@ jobs:
       - name: Install Premake
         run: |
           ${{env.PROJECT_PATH}}
-          curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-windows.zip -o premake.zip
+          curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip -o premake.zip
           tar -xf premake.zip
 
       - name: Cache MSBuild output
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ inputs.PROJECT_PATH }}projects/
           key: ${{ runner.os }}-${{ inputs.PROJECT_NAME }}-64x-ccache-${{ hashFiles(format('{0}**/*.cpp', inputs.PROJECT_PATH), format('{0}**/*.h', inputs.PROJECT_PATH), format('{0}**/*.hxx', inputs.PROJECT_PATH), format('{0}**/*.cxx', inputs.PROJECT_PATH), format('{0}**/*.c', inputs.PROJECT_PATH), format('{0}**/premake5.lua', inputs.PROJECT_PATH)) }}
@@ -671,7 +675,7 @@ jobs:
           ./premake5.exe --gmcommon=garrysmod_common ${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && '--dedicated' || '' }} vs2022
 
       - name: Setup MSBuild environment
-        uses: microsoft/setup-msbuild@v1
+        uses: microsoft/setup-msbuild@v3
 
       - name: Build
         run: |
@@ -679,18 +683,18 @@ jobs:
           cd projects/windows/vs2022
           msbuild /p:Configuration=${{inputs.PROJECT_CONFIGURATION}} /p:Platform=x64 ${{inputs.PROJECT_NAME}}.sln
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: inputs.UPLOAD == 'artifact'
         name: Upload ${{env.PROJECT_NAME_WIN64}}.${{inputs.WINDOWS_FILEEXTENTION}} (Artifact)
         with:
-          name: "${{env.PROJECT_NAME_WIN64}}.${{inputs.WINDOWS_FILEEXTENTION}} (64x)${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && ' (Dedicated)' || '' }}"
+          name: "${{env.PROJECT_NAME_WIN64}}.${{inputs.WINDOWS_FILEEXTENTION}} (64x)${{ inputs.ADDITIONAL_POSTARTIFACTNAME }}${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && ' (Dedicated)' || '' }}"
           path: ${{inputs.PROJECT_PATH}}projects/windows/vs2022/x86_64/${{inputs.PROJECT_CONFIGURATION}}/${{env.PROJECT_NAME_WIN64}}.${{inputs.WINDOWS_FILEEXTENTION}}
           retention-days: ${{inputs.ARTIFACT_EXPIRE}}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: inputs.UPLOAD_PDB == 'true'
         name: Upload ${{env.PROJECT_NAME_WIN64}}.pdb (Artifact)
         with:
-          name: "${{env.PROJECT_NAME_WIN64}}.pdb (64x)${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && ' (Dedicated)' || '' }}"
+          name: "${{env.PROJECT_NAME_WIN64}}.pdb (64x)${{ inputs.ADDITIONAL_POSTARTIFACTNAME }}${{ inputs.BUILD_WINDOWS_DEDICATED == 'true' && ' (Dedicated)' || '' }}"
           path: ${{inputs.PROJECT_PATH}}projects/windows/vs2022/x86_64/${{inputs.PROJECT_CONFIGURATION}}/${{env.PROJECT_NAME_WIN64}}.pdb
           retention-days: ${{inputs.PDB_ARTIFACT_EXPIRE}}
