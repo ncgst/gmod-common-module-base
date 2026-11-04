@@ -170,6 +170,16 @@ on:
         required: false
         default: "master"
         description: "The detouring branch to use."
+      BUILDER_IMAGE_32X:
+        type: string
+        required: false
+        default: "raphaelit7/gmod-builder:latest_32x"
+        description: "The container image for the Linux 32x build. Pin a digest to keep the compiler and glibc requirements fixed."
+      BUILDER_IMAGE_64X:
+        type: string
+        required: false
+        default: "raphaelit7/gmod-builder:latest_64x"
+        description: "The container image for the Linux 64x build. Pin a digest to keep the compiler and glibc requirements fixed."
       ADDITIONAL_DATA:
         type: string
         required: false
@@ -227,7 +237,7 @@ env:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-    container: raphaelit7/gmod-builder:latest_32x
+    container: ${{ inputs.BUILDER_IMAGE_32X }}
     if: (inputs.BUILD_32x == 'true') && (inputs.BUILD_LINUX == 'true')
     env:
       PTERODACTYL_SERVER: ${{ secrets.PTERODACTYL_SERVER }}
@@ -372,7 +382,7 @@ jobs:
 
   build-linux-64x:
     runs-on: ubuntu-latest
-    container: raphaelit7/gmod-builder:latest_64x
+    container: ${{ inputs.BUILDER_IMAGE_64X }}
     if: (inputs.BUILD_64x == 'true') && (inputs.BUILD_LINUX == 'true')
     env:
       PTERODACTYL_SERVER: ${{ secrets.PTERODACTYL_SERVER }}
